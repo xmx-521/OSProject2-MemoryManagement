@@ -8,7 +8,7 @@
 >
 > 指导教师：张慧娟
 >
-> 预览网址：https://manxin521.site/OSProject1-Elevator/dist/
+> 预览网址：https://manxin521.site/OSProject2-MemoryManagement/dist/
 
 
 
@@ -20,7 +20,7 @@
 
 由于是使用请求调页存储管理方式的模拟，页面置换算法是本项目的重点。本项目实现了两种页面置换算法：FIFO算法与LRU算法。FIFO算法与LRU算法都基于记录与页有关时间的朴素思路。
 
-为了清晰地展示系统的调度过程，并方便老师与助教测试系统，本项目选择以网页形式展示项目，项目网址为：https://manxin521.site/OSProject1-Elevator/dist/ ，访问需要联网。
+为了清晰地展示系统的调度过程，并方便老师与助教测试系统，本项目选择以网页形式展示项目，项目网址为：https://manxin521.site/OSProject2-MemoryManagement/dist/ ，访问需要联网。
 
 
 
@@ -68,7 +68,7 @@ LRU置换为每个页关联该页上次使用的时间。当必须置换一页�
 
 ## 四、使用说明
 
-项目网址为：https://manxin521.site/OSProject1-Elevator/dist/ ，直接访问即可，访问需要联网，建议使用Chrome浏览器访问，其余浏览器不保证系统正常运行。
+项目网址为：https://manxin521.site/OSProject2-MemoryManagement/dist/ ，直接访问即可，访问需要联网，建议使用Chrome浏览器访问，其余浏览器不保证系统正常运行。
 
 也可通过源码进行构建，见第五部分。
 
