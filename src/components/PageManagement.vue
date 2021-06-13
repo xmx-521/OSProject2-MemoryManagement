@@ -15,16 +15,14 @@
                         <span>地址空间</span>
                     </div>
                 </template>
-                <el-table :data="instructions" height="700" stripe>
+                <el-table :data="instructions" height="500" stripe>
                     <el-table-column prop="page_id" label="页号" width="50">
                     </el-table-column>
                     <el-table-column prop="address" label="地址" width="50">
                     </el-table-column>
                     <el-table-column prop="next_address" label="下个地址" width="80">
                     </el-table-column>
-                    <el-table-column prop="status" label="状态" width="80"
-                        :filters="[{text:'未执行',value:'未执行'},{text:'已执行',value:'已执行'}]" :filter-method="filterTag"
-                        filter-placement="bottom-end">
+                    <el-table-column prop="status" label="状态" width="80">
                         <template #default="scope">
                             <el-tag :type="scope.row.status==='未执行'?'primary':'success'" disable-transitions>
                                 {{scope.row.status}}</el-tag>
@@ -38,23 +36,31 @@
             <el-row>
                 <el-card class="memory">
                     <template #header>
-                        Memory
+                        <span style="font-size:25px;">Memory</span>
                     </template>
                     <el-space :size="30">
                         <el-col span=24 v-for="(memoryFrame,index) in memoryFrames" :key="index">
-                            <el-card class="box-card memoryFrame">
+                            <el-card class="box-card memoryFrame" :style="memoryFrame.color">
                                 <template #header>
                                     <div class="card-header">
-                                        <span>Frame {{index}}</span>
+                                        <span style="font-size:20px">Frame {{index}}</span>
                                     </div>
                                 </template>
                                 <div v-if="memoryFrame.pageId!=-1">
-                                    <div>
+                                    <div class="pageId">
                                         PageId:{{memoryFrame.pageId}}
                                     </div>
                                     <div v-for="(inst,index) in memoryFrame.instructions" :key="index"
                                         class="instruction">
-                                        {{inst.address}}
+                                        <div v-if="inst.status=='未执行'&&inst.address!=currentInstId" class="unconducted">
+                                            {{inst.address}}
+                                        </div>
+                                        <div v-if="inst.status=='已执行'&&inst.address!=currentInstId" class="conducted">
+                                            {{inst.address}}
+                                        </div>
+                                        <div v-if="inst.address==currentInstId" class="conducting">
+                                            {{inst.address}}
+                                        </div>
                                     </div>
                                 </div>
                             </el-card>
@@ -72,11 +78,11 @@
         <el-col span=24>
             <el-card class="controller">
                 <span>页置换算法: </span>
-                <el-select v-model="currentAlgorithm" placeholder="请选择页置换算法">
+                <el-select v-model="currentAlgorithm" placeholder="请选择页置换算法" :disabled="haveConductStepNum>0">
                     <el-option v-for="item in algorithms" :key="item.value" :label="item.label" :value="item.value">
                     </el-option>
                 </el-select>
-                <el-card style="margin-top:50px;">
+                <el-card style="margin-top:10px;">
                     <el-row>
                         指令数: 320
                     </el-row>
@@ -99,14 +105,14 @@
                         下条指令地址：{{instructions[currentInstId].next_address}}
                     </el-row>
                 </el-card>
-                <el-progress type="dashboard" :percentage="missRate" style="margin-top:50px;">
+                <el-progress type="dashboard" :percentage="missRate" style="margin-top:10px;">
                     <template #default="{ percentage }">
                         <div class="percentage-value">{{(percentage>0?percentage:0)}}%</div>
                         <div class="percentage-label">缺页率</div>
                     </template>
                 </el-progress>
                 <div class="controlPannel">
-                    <div style="margin-bottom:50px;">
+                    <div style="margin-bottom:10px;">
                         <span>自动执行速度: &times;{{speed}}</span>
                         <el-slider v-model="speed" max=5 :disabled="isAutoExecuting">
                         </el-slider>
@@ -162,7 +168,8 @@
                 LRUTime: 0,
                 isAutoExecuting: false,
                 speed: 2,
-                isPaused: false
+                isPaused: false,
+                pageColors: Array(32)
             }
         },
         computed: {
@@ -192,8 +199,14 @@
                 this.isAutoExecuting = false;
                 this.speed = 2;
                 this.isPaused = false;
+                this.initPageColors();
                 this.initMemoryPages();
                 this.initInstructions();
+            },
+            initPageColors() {
+                for (let i = 0; i < 32; i++) {
+                    this.pageColors[i] = this.randomColor()
+                }
             },
             initMemoryPages() {
                 this.memoryPages = Array(4);
@@ -202,7 +215,8 @@
                         pageId: -1,
                         instructions: [],
                         FIFOTime: this.FIFOTime,
-                        LRUTime: this.LRUTime
+                        LRUTime: this.LRUTime,
+                        color: 'backgroundColor:white;'
                     }
                 }
             },
@@ -306,6 +320,9 @@
             },
             conductOneStep() {
                 if (this.haveConductStepNum <= 319) {
+                    if (this.haveConductStepNum != 0) {
+                        this.currentInstId = this.instructions[this.currentInstId].next_address;
+                    }
                     this.haveConductStepNum++;
                     // console.log(this.haveConductStepNum);
                     switch (this.currentAlgorithm) {
@@ -319,8 +336,6 @@
                         }
                     }
                     this.instructions[this.currentInstId].status = "已执行";
-                    // console.log(this.currentInstId);
-                    this.currentInstId = this.instructions[this.currentInstId].next_address;
                 }
             },
             conductOneFIFO() {
@@ -393,7 +408,8 @@
                     pageId: pageId,
                     instructions: pageInstructions,
                     FIFOTime: this.FIFOTime,
-                    LRUTime: this.LRUTime
+                    LRUTime: this.LRUTime,
+                    color: `backgroundColor:${this.pageColors[pageId]};`
                 }
             },
             autoExecute() {
@@ -416,6 +432,12 @@
                 this.isAutoExecuting = true;
                 this.isPaused = false;
                 this.autoExecute()
+            },
+            randomColor() {
+                var r = Math.floor(Math.random() * 256);
+                var g = Math.floor(Math.random() * 256);
+                var b = Math.floor(Math.random() * 256);
+                return "rgb(" + r + "," + g + "," + b + "," + "0.5" + ")";
             }
         }
     }
@@ -437,23 +459,23 @@
     }
 
     .memoryFrame {
-        height: 600px;
-        width: 200px;
+        height: 460px;
+        width: 140px;
     }
 
     .memory {
-        height: 700px;
-        width: 1000px;
+        height: 560px;
+        width: 700px;
         background-color: #ECFDF5;
     }
 
     .controller {
-        height: 800px;
-        width: 350px;
+        height: 600px;
+        width: 330px;
     }
 
     .conductProgress {
-        margin-top: 30px;
+        margin-top: 10px;
     }
 
     .percentage-value {
@@ -466,14 +488,44 @@
     }
 
     .instruction {
-        height: 40px;
+        height: 30px;
         font-size: 15px;
         border: 1px;
         text-align: center;
-        line-height: 40px;
+        line-height: 30px;
+        border: 1px solid
     }
 
     .controlPannel {
-        margin-top: 70px;
+        margin-top: 20px;
+    }
+
+    .pageId {
+        height: 50px;
+        font-size: 18px;
+        text-align: center;
+        line-height: 50px;
+    }
+
+    .conducted {
+        background-image: linear-gradient(to right, var(--tw-gradient-stops));
+        --tw-gradient-from: #34d399;
+        --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(52, 211, 153, 0));
+        --tw-gradient-stops: var(--tw-gradient-from), #34d399, var(--tw-gradient-to, rgba(52, 211, 153, 0));
+        --tw-gradient-to: #a7f3d0;
+    }
+
+    .unconducted {
+        --tw-bg-opacity: 1;
+        background-color: rgba(147, 197, 253, var(--tw-bg-opacity));
+
+    }
+
+    .conducting {
+        background-image: linear-gradient(to right, var(--tw-gradient-stops));
+        --tw-gradient-from: #f59e0b;
+        --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(245, 158, 11, 0));
+        --tw-gradient-stops: var(--tw-gradient-from), #ef4444, var(--tw-gradient-to, rgba(239, 68, 68, 0));
+        --tw-gradient-to: #ec4899;
     }
 </style>
